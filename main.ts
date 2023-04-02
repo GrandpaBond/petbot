@@ -32,6 +32,17 @@ function show_eyes (eyes: number) {
         pixels = Math.floor(pixels / 2)
     }
 }
+function maybe_blink () {
+    if (input.runningTime() > next_blink && !(blinking)) {
+        show_eyes(EYES_SHUT)
+        blinking = true
+    }
+    if (blinking && input.runningTime() > next_blink + blinktime) {
+        show_eyes(my_eyes)
+        next_blink = input.runningTime() + blinkgap
+        blinking = false
+    }
+}
 function setup_eyes () {
     EYES_LEFT = 873
     EYES_MAD = 347
@@ -108,12 +119,13 @@ function express () {
     basic.pause(1000)
     basic.pause(1000)
 }
-let EYES_SHUT = 0
 let EYES_SAD = 0
 let EYES_RIGHT = 0
 let EYES_POP = 0
 let EYES_MAD = 0
 let EYES_LEFT = 0
+let EYES_SHUT = 0
+let blinking = false
 let y = 0
 let x = 0
 let pixels = 0
@@ -121,20 +133,28 @@ let MOUTH_SULK = 0
 let MOUTH_SHOUT = 0
 let MOUTH_RIGHT = 0
 let MOUTH_OPEN = 0
-let MOUTH_OK = 0
 let MOUTH_LEFT = 0
 let MOUTH_HMMM = 0
 let MOUTH_GRIN = 0
 let MOUTH_FLAT = 0
+let MOUTH_OK = 0
 let EYES_OPEN = 0
+let my_eyes = 0
+let next_blink = 0
+let blinktime = 0
+let blinkgap = 0
 setup_eyes()
 setup_mouths()
-while (true) {
-    all_eyes()
-    basic.pause(5000)
-    all_mouths()
-    basic.pause(5000)
-}
+let start = input.runningTime()
+blinkgap = 3000
+blinktime = 500
+next_blink = input.runningTime() + blinkgap
+my_eyes = EYES_OPEN
+show_eyes(my_eyes)
+show_mouth(MOUTH_OK)
 basic.forever(function () {
 	
+})
+loops.everyInterval(200, function () {
+    maybe_blink()
 })
