@@ -14,33 +14,6 @@ function look_left () {
     show_mouth(my_mouth)
     mood_level = 100
 }
-function set_mood (mood: number) {
-    if (mood == MOOD_DEAD) {
-        basic.showIcon(IconNames.Skull)
-    } else if (mood == MOOD_ASLEEP) {
-        my_eyes = EYES_SHUT
-        my_mouth = MOUTH_OPEN
-    } else if (mood == MOOD_AWAKE) {
-        my_eyes = EYES_OPEN
-        my_mouth = MOUTH_FLAT
-    } else if (mood == MOOD_HAPPY) {
-        my_eyes = EYES_OPEN
-        my_mouth = MOUTH_GRIN
-    } else if (mood == MOOD_SAD) {
-        my_eyes = EYES_SAD
-        my_mouth = MOUTH_SULK
-    } else if (mood == MOOD_ANGRY) {
-        my_eyes = EYES_MAD
-        my_mouth = MOUTH_SHOUT
-    } else if (mood == MOOD_GOSH) {
-        my_eyes = EYES_POP
-        my_mouth = MOUTH_OPEN
-    }
-    if (my_mood != MOOD_DEAD) {
-        show_eyes(my_eyes)
-        show_mouth(my_mouth)
-    }
-}
 function all_mouths () {
     show_eyes(EYES_OPEN)
     show_mouth(MOUTH_FLAT)
@@ -79,17 +52,6 @@ input.onLogoEvent(TouchButtonEvent.LongPressed, function () {
     my_mood = MOOD_HAPPY
     mood_level = 100
 })
-function maybe_blink () {
-    if (input.runningTime() > next_blink && !(blinking)) {
-        show_eyes(EYES_SHUT)
-        blinking = true
-    }
-    if (blinking && input.runningTime() > next_blink + blinktime) {
-        show_eyes(my_eyes)
-        next_blink = input.runningTime() + randint(blinkgap, 3 * blinkgap)
-        blinking = false
-    }
-}
 function look_right () {
     my_eyes = EYES_RIGHT
     my_mouth = MOUTH_RIGHT
@@ -120,6 +82,36 @@ function show_mouth (mouth: number) {
             led.unplot(x, y)
         }
         pixels = Math.floor(pixels / 2)
+    }
+}
+function Set_mood (mood: number) {
+    if (mood == my_mood) {
+        if (mood == MOOD_DEAD) {
+            basic.showIcon(IconNames.Skull)
+        } else if (mood == MOOD_ASLEEP) {
+            my_eyes = EYES_SHUT
+            my_mouth = MOUTH_FLAT
+        } else if (mood == MOOD_AWAKE) {
+            my_eyes = EYES_OPEN
+            my_mouth = MOUTH_FLAT
+        } else if (mood == MOOD_HAPPY) {
+            my_eyes = EYES_OPEN
+            my_mouth = MOUTH_GRIN
+        } else if (mood == MOOD_SAD) {
+            my_eyes = EYES_SAD
+            my_mouth = MOUTH_SULK
+        } else if (mood == MOOD_ANGRY) {
+            my_eyes = EYES_MAD
+            my_mouth = MOUTH_SHOUT
+        } else if (mood == MOOD_GOSH) {
+            my_eyes = EYES_POP
+            my_mouth = MOUTH_OPEN
+        }
+        my_mood = mood
+        if (my_mood != MOOD_DEAD) {
+            show_eyes(my_eyes)
+            show_mouth(my_mouth)
+        }
     }
 }
 input.onSound(DetectedSound.Loud, function () {
@@ -165,16 +157,34 @@ input.onGesture(Gesture.ThreeG, function () {
     my_mood = MOOD_ANGRY
     mood_level = 100
 })
+function maybe_blink_or_snore () {
+    if (input.runningTime() > next_blink && !(blinking)) {
+        if (my_mood == MOOD_ASLEEP) {
+            show_mouth(MOUTH_OPEN)
+        } else {
+            show_eyes(EYES_SHUT)
+        }
+        blinking = true
+    }
+    if (blinking && input.runningTime() > next_blink + blinktime) {
+        if (my_mood == MOOD_ASLEEP) {
+            show_mouth(my_mouth)
+        } else {
+            show_eyes(my_eyes)
+        }
+        next_blink = input.runningTime() + randint(blinkgap, 3 * blinkgap)
+        blinking = false
+    }
+}
 function maybe_react () {
     mood_level += -1
-    if (mood_level == 0) {
-        my_mood = MOOD_AWAKE
-    } else if (mood_level == -50) {
-        my_mood = MOOD_ASLEEP
-    } else if (mood_level == -1000) {
-        my_mood = MOOD_DEAD
+    if (mood_level < -1000) {
+        Set_mood(MOOD_DEAD)
+    } else if (mood_level < -100) {
+        Set_mood(MOOD_ASLEEP)
+    } else if (mood_level < 0) {
+        Set_mood(MOOD_AWAKE)
     }
-    set_mood(my_mood)
 }
 function express () {
     show_eyes(EYES_OPEN)
@@ -202,22 +212,22 @@ function express () {
     basic.pause(1000)
     basic.pause(1000)
 }
-let EYES_RIGHT = 0
 let blinking = false
+let EYES_SHUT = 0
+let EYES_SAD = 0
+let EYES_POP = 0
+let EYES_MAD = 0
+let EYES_RIGHT = 0
 let y = 0
 let x = 0
 let pixels = 0
+let MOUTH_SULK = 0
+let MOUTH_SHOUT = 0
 let MOUTH_RIGHT = 0
+let MOUTH_OPEN = 0
 let MOUTH_OK = 0
 let MOUTH_HMMM = 0
-let EYES_POP = 0
-let MOUTH_SHOUT = 0
-let EYES_MAD = 0
-let MOUTH_SULK = 0
-let EYES_SAD = 0
 let MOUTH_GRIN = 0
-let MOUTH_OPEN = 0
-let EYES_SHUT = 0
 let MOUTH_LEFT = 0
 let EYES_LEFT = 0
 let MOOD_GOSH = 0
@@ -253,12 +263,12 @@ basic.forever(function () {
 	
 })
 loops.everyInterval(200, function () {
-    maybe_blink()
+    maybe_blink_or_snore()
     maybe_react()
-    if (input.lightLevel() > 20) {
+    if (input.lightLevel() > 15) {
         my_mood = MOOD_SAD
         mood_level = 100
     } else {
-    	
+        my_mood = MOOD_AWAKE
     }
 })
