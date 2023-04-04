@@ -8,11 +8,9 @@ function set_up_moods () {
     MOOD_GOSH = 6
 }
 function look_left () {
-    my_eyes = EYES_LEFT
-    my_mouth = MOUTH_LEFT
-    show_eyes(my_eyes)
-    show_mouth(my_mouth)
-    mood_level = 100
+    show_eyes(EYES_LEFT)
+    show_mouth(MOUTH_LEFT)
+    basic.pause(1000)
 }
 function all_mouths () {
     show_eyes(EYES_OPEN)
@@ -49,15 +47,12 @@ function show_eyes (eyes: number) {
     }
 }
 input.onLogoEvent(TouchButtonEvent.LongPressed, function () {
-    my_mood = MOOD_HAPPY
-    mood_level = 100
+    new_mood(MOOD_HAPPY)
 })
 function look_right () {
-    my_eyes = EYES_RIGHT
-    my_mouth = MOUTH_RIGHT
-    show_eyes(my_eyes)
-    show_mouth(my_mouth)
-    mood_level = 100
+    basic.pause(1000)
+    show_eyes(EYES_RIGHT)
+    show_mouth(MOUTH_RIGHT)
 }
 input.onButtonPressed(Button.A, function () {
     look_left()
@@ -82,36 +77,6 @@ function show_mouth (mouth: number) {
             led.unplot(x, y)
         }
         pixels = Math.floor(pixels / 2)
-    }
-}
-function Set_mood (mood: number) {
-    if (mood == my_mood) {
-        if (mood == MOOD_DEAD) {
-            basic.showIcon(IconNames.Skull)
-        } else if (mood == MOOD_ASLEEP) {
-            my_eyes = EYES_SHUT
-            my_mouth = MOUTH_FLAT
-        } else if (mood == MOOD_AWAKE) {
-            my_eyes = EYES_OPEN
-            my_mouth = MOUTH_FLAT
-        } else if (mood == MOOD_HAPPY) {
-            my_eyes = EYES_OPEN
-            my_mouth = MOUTH_GRIN
-        } else if (mood == MOOD_SAD) {
-            my_eyes = EYES_SAD
-            my_mouth = MOUTH_SULK
-        } else if (mood == MOOD_ANGRY) {
-            my_eyes = EYES_MAD
-            my_mouth = MOUTH_SHOUT
-        } else if (mood == MOOD_GOSH) {
-            my_eyes = EYES_POP
-            my_mouth = MOUTH_OPEN
-        }
-        my_mood = mood
-        if (my_mood != MOOD_DEAD) {
-            show_eyes(my_eyes)
-            show_mouth(my_mouth)
-        }
     }
 }
 input.onSound(DetectedSound.Loud, function () {
@@ -139,8 +104,7 @@ input.onButtonPressed(Button.B, function () {
     look_right()
 })
 input.onGesture(Gesture.Shake, function () {
-    my_mood = MOOD_AWAKE
-    mood_level = 100
+    new_mood(MOOD_AWAKE)
 })
 function setup_mouths () {
     MOUTH_FLAT = 448
@@ -154,9 +118,41 @@ function setup_mouths () {
     MOUTH_SULK = 17856
 }
 input.onGesture(Gesture.ThreeG, function () {
+    my_mood = 0
     my_mood = MOOD_ANGRY
     mood_level = 100
 })
+function new_mood (mood: number) {
+    if (mood != my_mood) {
+        if (mood == MOOD_DEAD) {
+            basic.showIcon(IconNames.Skull)
+        } else if (mood == MOOD_ASLEEP) {
+            my_eyes = EYES_SHUT
+            my_mouth = MOUTH_FLAT
+        } else if (mood == MOOD_AWAKE) {
+            my_eyes = EYES_OPEN
+            my_mouth = MOUTH_FLAT
+        } else if (mood == MOOD_HAPPY) {
+            my_eyes = EYES_OPEN
+            my_mouth = MOUTH_GRIN
+        } else if (mood == MOOD_SAD) {
+            my_eyes = EYES_SAD
+            my_mouth = MOUTH_SULK
+        } else if (mood == MOOD_ANGRY) {
+            my_eyes = EYES_MAD
+            my_mouth = MOUTH_SHOUT
+        } else if (mood == MOOD_GOSH) {
+            my_eyes = EYES_POP
+            my_mouth = MOUTH_OPEN
+        }
+        my_mood = mood
+        if (my_mood != MOOD_DEAD) {
+            show_eyes(my_eyes)
+            show_mouth(my_mouth)
+            mood_level = 100
+        }
+    }
+}
 function maybe_blink_or_snore () {
     if (input.runningTime() > next_blink && !(blinking)) {
         if (my_mood == MOOD_ASLEEP) {
@@ -179,11 +175,11 @@ function maybe_blink_or_snore () {
 function maybe_react () {
     mood_level += -1
     if (mood_level < -1000) {
-        Set_mood(MOOD_DEAD)
+        new_mood(MOOD_DEAD)
     } else if (mood_level < -100) {
-        Set_mood(MOOD_ASLEEP)
+        new_mood(MOOD_ASLEEP)
     } else if (mood_level < 0) {
-        Set_mood(MOOD_AWAKE)
+        new_mood(MOOD_AWAKE)
     }
 }
 function express () {
@@ -265,10 +261,7 @@ basic.forever(function () {
 loops.everyInterval(200, function () {
     maybe_blink_or_snore()
     maybe_react()
-    if (input.lightLevel() > 15) {
-        my_mood = MOOD_SAD
-        mood_level = 100
-    } else {
-        my_mood = MOOD_AWAKE
+    if (input.lightLevel() < 15) {
+        new_mood(MOOD_SAD)
     }
 })
